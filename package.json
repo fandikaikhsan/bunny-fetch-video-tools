@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "tsc && node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -11,11 +12,13 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^20.12.11",
+    "@types/node-fetch": "^2.6.11",
     "prisma": "^5.13.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "node-fetch": "^2.7.0"
   }
 }
