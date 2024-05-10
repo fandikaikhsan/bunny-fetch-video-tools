@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,4 +5,384 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model articles {
+  id               Int                @id @default(autoincrement())
+  content          String             @default("")
+  guess_access     Boolean            @default(false)
+  status           Int                @default(0)
+  group_sub_topics group_sub_topics[]
+  group_topics     group_topics[]
+}
+
+model assets {
+  id               Int                @id @default(autoincrement())
+  title            String             @default("")
+  type             asset_type
+  description      String             @default("")
+  thumbnail        String             @default("")
+  playlist         String             @default("")
+  video            String             @default("")
+  status           Int                @default(0)
+  guess_access     Boolean            @default(false)
+  meta             String?
+  group_sub_topics group_sub_topics[] @relation("assetsToSubTopics")
+}
+
+model banners {
+  id       Int             @id @default(autoincrement())
+  title    String          @default("")
+  image    String          @default("")
+  url      String          @default("")
+  status   Int             @default(0)
+  position banner_position
+}
+
+model blog_articles {
+  id              Int             @id @default(autoincrement())
+  title           String          @default("")
+  category_id     Int
+  short_desc      String          @default("")
+  content         String          @default("")
+  image_header    String          @default("")
+  image_headline  String          @default("")
+  author          String          @default("")
+  is_headline     Boolean         @default(false)
+  is_popular      Boolean         @default(false)
+  status          Int             @default(0)
+  created_at      DateTime        @default(now()) @db.Timestamptz(6)
+  time_read       Int             @default(0)
+  blog_categories blog_categories @relation(fields: [category_id], references: [id])
+}
+
+model blog_categories {
+  id            Int             @id @default(autoincrement())
+  name          String          @default("")
+  color         String          @default("")
+  status        Int             @default(0)
+  blog_articles blog_articles[]
+}
+
+model group_sub {
+  id               Int                @id @default(autoincrement())
+  name             String             @default("")
+  short_desc       String             @default("")
+  description      String             @default("")
+  status           Int                @default(0)
+  group_id         Int
+  short_name       String             @default("")
+  score_passing    Int                @default(0)
+  groups           groups             @relation(fields: [group_id], references: [id])
+  group_sub_topics group_sub_topics[]
+  group_topics     group_topics[]
+  questions        questions[]
+}
+
+model group_sub_topics {
+  id             Int          @id @default(autoincrement())
+  name           String       @default("")
+  short_desc     String       @default("")
+  description    String       @default("")
+  status         Int          @default(0)
+  guess_access   Boolean      @default(false)
+  group_sub_id   Int
+  group_topic_id Int
+  statistics     String       @default("")
+  image          String       @default("")
+  article_id     Int
+  articles       articles     @relation(fields: [article_id], references: [id])
+  group_sub      group_sub    @relation(fields: [group_sub_id], references: [id])
+  group_topics   group_topics @relation(fields: [group_topic_id], references: [id])
+  questions      questions[]
+  assets         assets[]     @relation("assetsToSubTopics")
+  items          items[]      @relation("subTopicsToItems")
+}
+
+model group_topics {
+  id               Int                @id @default(autoincrement())
+  name             String             @default("")
+  short_desc       String             @default("")
+  description      String             @default("")
+  status           Int                @default(0)
+  guess_access     Boolean            @default(false)
+  group_sub_id     Int
+  statistics       String             @default("")
+  article_id       Int
+  image            String             @default("")
+  meta             String?
+  group_sub_topics group_sub_topics[]
+  articles         articles           @relation(fields: [article_id], references: [id])
+  group_sub        group_sub          @relation(fields: [group_sub_id], references: [id])
+  questions        questions[]
+}
+
+model groups {
+  id                    Int         @id @default(autoincrement())
+  name                  String      @default("")
+  short_desc            String      @default("")
+  description           String      @default("")
+  status                Int         @default(0)
+  statistics            String      @default("")
+  statistics_simulation String      @default("")
+  group_sub             group_sub[]
+  packages              packages[]
+  prices                prices[]
+  items                 items[]     @relation("itemsToGroups")
+}
+
+model items {
+  id               Int                @id @default(autoincrement())
+  name             String             @default("")
+  type             item_type          @default(SUBSCRIPTION)
+  short_desc       String?
+  price            Int                @default(0)
+  status           Int                @default(0)
+  duration         Int                @default(0)
+  price_desc       String?
+  user_items       user_items[]
+  groups           groups[]           @relation("itemsToGroups")
+  packages         packages[]         @relation("itemsToPackages")
+  transactions     transactions[]     @relation("itemsToTransactions")
+  group_sub_topics group_sub_topics[] @relation("subTopicsToItems")
+}
+
+model log_submit {
+  id              Int               @id @default(autoincrement())
+  user_id         Int
+  package_id      Int
+  payload         String?
+  score           Float?
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  status          log_submit_status @default(DRAFT)
+  expired_at      DateTime          @db.Timestamptz(6)
+  result          String?
+  updated_at      DateTime?         @default(now()) @db.Timestamptz(6)
+  result_solution String?
+  result_sub      String?
+  packages        packages          @relation(fields: [package_id], references: [id])
+  users           users             @relation(fields: [user_id], references: [id])
+}
+
+model packages {
+  id             Int          @id @default(autoincrement())
+  name           String       @default("")
+  short_desc     String       @default("")
+  description    String       @default("")
+  start_date     DateTime     @default(now()) @db.Timestamptz(6)
+  end_date       DateTime     @default(now()) @db.Timestamptz(6)
+  timer          Int          @default(0)
+  status         Int          @default(0)
+  guess_access   Boolean      @default(false)
+  type           package_type @default(SIMULATION)
+  total_question Int          @default(0)
+  difficulty     difficulty   @default(MUDAH)
+  group_id       Int
+  log_submit     log_submit[]
+  groups         groups       @relation(fields: [group_id], references: [id])
+  items          items[]      @relation("itemsToPackages")
+  questions      questions[]  @relation("packagesToQuestions")
+}
+
+model prices {
+  id         Int     @id @default(autoincrement())
+  name       String  @default("")
+  group_id   Int
+  quantity   Int
+  price      Int
+  price_desc String?
+  short_desc String?
+  groups     groups  @relation(fields: [group_id], references: [id])
+}
+
+model question_choices {
+  id          Int       @id
+  question_id Int
+  text        String    @default("")
+  is_correct  Boolean   @default(false)
+  score       Float     @default(0)
+  questions   questions @relation(fields: [question_id], references: [id])
+}
+
+model question_explains {
+  id          Int       @id
+  question_id Int
+  short_desc  String    @default("")
+  text        String    @default("")
+  url         String?   @default("")
+  questions   questions @relation(fields: [question_id], references: [id])
+}
+
+model questions {
+  id                  Int                 @id
+  question            String              @default("")
+  type                question_type
+  group_sub_id        Int
+  group_sub_topics_id Int
+  tag                 String?
+  is_quiz             Boolean             @default(false)
+  guest_access        Boolean             @default(false)
+  group_topics_id     Int                 @default(1)
+  question_choices    question_choices[]
+  question_explains   question_explains[]
+  group_sub           group_sub           @relation(fields: [group_sub_id], references: [id])
+  group_sub_topics    group_sub_topics    @relation(fields: [group_sub_topics_id], references: [id])
+  group_topics        group_topics        @relation(fields: [group_topics_id], references: [id])
+  packages            packages[]          @relation("packagesToQuestions")
+}
+
+model transaction_logs {
+  id             Int                @id @default(autoincrement())
+  transaction_id Int
+  user_id        Int
+  log            String
+  payload        String?
+  status         transaction_status @default(PENDING)
+  created_at     DateTime           @default(now()) @db.Timestamptz(6)
+  user_agent     String?
+  transactions   transactions       @relation(fields: [transaction_id], references: [id])
+  users          users              @relation(fields: [user_id], references: [id])
+}
+
+model transactions {
+  id               Int                @id @default(autoincrement())
+  order_id         String             @unique
+  user_id          Int
+  gross_amount     Int
+  payload          String
+  payment_gateway  String
+  snap_token       String?
+  snap_url         String?
+  payment_type     String?
+  bank             String?
+  va_number        String?
+  store            String?
+  status           transaction_status @default(PENDING)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  expired_at       DateTime?          @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @db.Timestamptz(6)
+  acquirer         String?
+  user_agent       String?
+  transaction_logs transaction_logs[]
+  users            users              @relation(fields: [user_id], references: [id])
+  items            items[]            @relation("itemsToTransactions")
+}
+
+model user_items {
+  id         Int         @id @default(autoincrement())
+  user_id    Int
+  item_id    Int
+  status     subs_status
+  expired_at DateTime    @db.Timestamptz(6)
+  created_at DateTime    @default(now()) @db.Timestamptz(6)
+  items      items       @relation(fields: [item_id], references: [id])
+  users      users       @relation(fields: [user_id], references: [id])
+}
+
+model user_otp {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  otp        String   @db.VarChar(16)
+  active     Boolean  @default(true)
+  expired_at DateTime @db.Timestamptz(6)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  users      users    @relation(fields: [user_id], references: [id])
+}
+
+model user_token {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  token      String    @unique @db.VarChar(512)
+  is_logout  Boolean   @default(false)
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  expired_at DateTime? @db.Timestamptz(6)
+  users      users     @relation(fields: [user_id], references: [id])
+}
+
+model users {
+  id               Int                @id @default(autoincrement())
+  email            String             @unique
+  password         String             @db.VarChar(512)
+  avatar           String?            @db.VarChar(255)
+  first_name       String             @db.VarChar(128)
+  last_name        String?            @db.VarChar(128)
+  status           Int                @default(0)
+  phone            String?            @db.VarChar(32)
+  birth_city       String?            @db.VarChar(128)
+  birth_date       DateTime?          @db.Timestamptz(6)
+  marketing        String?            @db.VarChar(128)
+  log_submit       log_submit[]
+  transaction_logs transaction_logs[]
+  transactions     transactions[]
+  user_items       user_items[]
+  user_otp         user_otp[]
+  user_token       user_token[]
+}
+
+enum asset_type {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+}
+
+enum banner_position {
+  HOME
+  CATEGORY
+  CATEGORY_DETAIL
+  MATERIAL
+  BLOG
+  HELP
+  LOGIN
+  REGISTER
+  PROFILE
+  SIMULATION
+}
+
+enum difficulty {
+  MUDAH
+  SEDANG
+  SULIT
+}
+
+enum item_type {
+  SUBSCRIPTION
+  PACKAGE
+  EXAM
+}
+
+enum log_submit_status {
+  DRAFT
+  SUBMIT
+  CANCEL
+  TIMEOUT
+}
+
+enum package_type {
+  SIMULATION
+  TRYOUT
+  EXAM
+}
+
+enum question_type {
+  CHOICE
+  CHOICES
+  TEXT
+}
+
+enum subs_status {
+  SUBSCRIBE
+  SIMULATION
+  TRY_OUT
+  EXPIRE
+}
+
+enum transaction_status {
+  PENDING
+  SUCCESS
+  SETTLEMENT
+  FAILED
+  DENY
+  CANCEL
+  EXPIRE
 }
