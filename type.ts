@@ -32,4 +32,5 @@ export type VideoListType = {
   libraryId: string
   videoId: string
   thumbnail: string
+  meta: string
 }

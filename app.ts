@@ -37,6 +37,7 @@ const res: any = await fetch(url, options)
         thumbnail: removeFileExtension(item.title),
         libraryId: item.videoLibraryId.toString(),
         videoId: item.guid,
+        meta: `${Math.floor(item.length / 60)}:${item.length % 60}`,
       })
     })
   })
@@ -52,6 +53,7 @@ videoList.forEach(async (video) => {
       data: {
         playlist: video.libraryId,
         video: video.videoId,
+        meta: video.meta,
       },
     })
     .catch((e) => {
